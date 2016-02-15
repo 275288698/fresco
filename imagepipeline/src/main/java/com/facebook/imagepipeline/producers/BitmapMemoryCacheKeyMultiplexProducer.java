@@ -11,7 +11,8 @@ package com.facebook.imagepipeline.producers;
 
 import android.util.Pair;
 
-import com.facebook.imagepipeline.cache.BitmapMemoryCacheKey;
+import com.facebook.cache.common.CacheKey;
+import com.facebook.common.references.CloseableReference;
 import com.facebook.imagepipeline.cache.CacheKeyFactory;
 import com.facebook.imagepipeline.image.CloseableImage;
 import com.facebook.imagepipeline.request.ImageRequest;
@@ -20,22 +21,28 @@ import com.facebook.imagepipeline.request.ImageRequest;
  * Multiplex producer that uses the bitmap memory cache key to combine requests.
  */
 public class BitmapMemoryCacheKeyMultiplexProducer extends
-    MultiplexProducer<Pair<BitmapMemoryCacheKey, ImageRequest.RequestLevel>, CloseableImage> {
+    MultiplexProducer<Pair<CacheKey, ImageRequest.RequestLevel>,
+        CloseableReference<CloseableImage>> {
 
   private final CacheKeyFactory mCacheKeyFactory;
 
   public BitmapMemoryCacheKeyMultiplexProducer(
       CacheKeyFactory cacheKeyFactory,
-      Producer nextProducer) {
-    super(nextProducer);
+      Producer inputProducer) {
+    super(inputProducer);
     mCacheKeyFactory = cacheKeyFactory;
   }
 
-  protected Pair<BitmapMemoryCacheKey, ImageRequest.RequestLevel> getKey(
+  protected Pair<CacheKey, ImageRequest.RequestLevel> getKey(
       ProducerContext producerContext) {
     return Pair.create(
         mCacheKeyFactory.getBitmapCacheKey(producerContext.getImageRequest()),
         producerContext.getLowestPermittedRequestLevel());
+  }
+
+  public CloseableReference<CloseableImage> cloneOrNull(
+      CloseableReference<CloseableImage> closeableImage) {
+    return CloseableReference.cloneOrNull(closeableImage);
   }
 
 }
